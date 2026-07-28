@@ -1,0 +1,35 @@
+name: Aggiorna indicatori appalti
+
+on:
+  schedule:
+    - cron: "0 6 3 * *"   # il 3 di ogni mese (un giorno dopo l'aggiornamento ANAC)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Installa dipendenze
+        run: pip install requests
+
+      - name: Calcola indicatori (2024 e 2025 insieme)
+        run: |
+          mkdir -p dati
+          python3 calcola_indicatori.py 2024,2025 dati/indicatori.json
+
+      - name: Verifica che il file non sia vuoto
+        run: test -s dati/indicatori.json || (echo "indicatori.json vuoto, aborto" && exit 1)
+
+      - name: Commit e push se ci sono modifiche
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dati/
+          git diff --quiet --cached || git commit -m "Aggiornamento indicatori appalti"
+          git push
