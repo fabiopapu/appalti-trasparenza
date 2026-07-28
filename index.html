@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trasparenza Appalti · Indicatori statistici per regione</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#16233d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Appalti">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blu:#16233d; --blu-scuro:#0d1626;
+  --oro:#b8860b; --oro-chiaro:#e8c874;
+  --verde:#0a6b4f; --ambra:#a86a00;
+  --cemento:#f6f4ee; --carta:#fff; --inchiostro:#1a1f2b;
+  --grigio:#5c6470; --linea:#ddd8ca; --rosso:#a13a34;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Source Sans 3',system-ui,sans-serif;background:var(--cemento);color:var(--inchiostro);font-size:15px;line-height:1.5}
+h1,h2,h3{font-family:'Newsreader',Georgia,serif;font-weight:700}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+header{
+  background:var(--blu);
+  background-image:repeating-linear-gradient(180deg, rgba(255,255,255,.03) 0px, rgba(255,255,255,.03) 1px, transparent 1px, transparent 26px);
+  color:#f2ede1;border-bottom:3px solid var(--oro);box-shadow:0 3px 0 var(--blu-scuro);
+}
+.header-inner{max-width:1180px;margin:0 auto;padding:26px 20px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.btn-installa{flex:none;background:var(--oro);color:var(--blu-scuro);border:none;border-radius:8px;padding:9px 16px;font-family:'Source Sans 3';font-weight:600;font-size:13px;cursor:pointer}
+.btn-installa:hover{background:var(--oro-chiaro)}
+.header-icona{flex:none;width:44px;height:44px;color:var(--oro-chiaro)}
+header h1{font-size:clamp(24px,4vw,36px);font-weight:700;line-height:1;letter-spacing:.2px}
+.header-sub{font-size:13px;color:#c9c2ac;max-width:680px;margin-top:7px;font-family:'Source Sans 3'}
+.header-sub a{color:var(--oro-chiaro)}
+
+.disclaimer{
+  background:#fdf6e3;border:1px solid #e6d8a8;color:#6b5410;
+  max-width:1180px;margin:16px auto 0;padding:12px 16px;border-radius:8px;font-size:13px;
+}
+.disclaimer b{color:#4a3900}
+
+main{max-width:1180px;margin:0 auto;padding:20px 20px 60px}
+
+.barra{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.cerca input{padding:9px 12px;border:1px solid var(--linea);border-radius:7px;font-family:'Source Sans 3';font-size:14px;width:260px;max-width:60vw}
+.select-filtro{padding:9px 10px;border:1px solid var(--linea);border-radius:7px;font-family:'Source Sans 3';font-size:14px;background:#fff;color:var(--inchiostro)}
+.select-filtro:disabled{background:#f5f5f5;color:var(--grigio);cursor:not-allowed}
+.ordina select{padding:9px 10px;border:1px solid var(--linea);border-radius:7px;font-family:'Source Sans 3';font-size:14px}
+
+#stato{padding:48px 20px;text-align:center;color:var(--grigio)}
+#stato .spin{display:inline-block;width:26px;height:26px;border:3px solid var(--linea);border-top-color:var(--blu);border-radius:50%;animation:giro 1s linear infinite;margin-bottom:12px}
+@keyframes giro{to{transform:rotate(360deg)}}
+
+.griglia-regioni{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px}
+.card-regione{background:var(--carta);border:1px solid var(--linea);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .12s}
+.card-regione:hover{border-color:var(--blu)}
+.card-regione.attiva{border-color:var(--blu);box-shadow:0 0 0 2px rgba(11,78,162,.15)}
+.card-regione h3{font-size:15px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.card-regione .pct{font-family:'IBM Plex Mono';font-weight:700;font-size:22px}
+.card-regione .pct.alto{color:var(--rosso)}
+.card-regione .pct.medio{color:var(--ambra)}
+.card-regione .pct.basso{color:var(--verde)}
+.card-regione .sotto{font-size:12px;color:var(--grigio);margin-top:2px}
+
+.tab-wrap{background:var(--carta);border:1px solid var(--linea);border-radius:10px;overflow:hidden}
+.tab-testata{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding:14px 16px;border-bottom:1px solid var(--linea)}
+.tab-testata h2{font-size:17px;text-transform:uppercase;letter-spacing:.4px}
+.conteggio{font-size:13px;color:var(--grigio)}
+.scroll-x{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:680px}
+th{font-family:'Source Sans 3';font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.6px;text-align:left;color:var(--grigio);padding:9px 12px;border-bottom:2px solid var(--linea);background:#fafbfa;cursor:pointer;user-select:none}
+th:hover{color:var(--blu)}
+td{padding:8px 12px;border-bottom:1px solid #eceeec}
+td.num{font-family:'IBM Plex Mono';text-align:right;white-space:nowrap}
+.badge-pct{display:inline-flex;padding:2px 8px;border-radius:999px;font-family:'IBM Plex Mono';font-weight:700;font-size:13px}
+.badge-pct.alto{background:#fbebea;color:var(--rosso)}
+.badge-pct.medio{background:#fff4e0;color:var(--ambra)}
+.badge-pct.basso{background:#e8f6ec;color:var(--verde)}
+.nd{color:var(--grigio)}
+
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:#f2f6fb}
+
+.overlay-dettaglio{display:none;position:fixed;inset:0;background:rgba(22,27,32,.65);z-index:1000;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto}
+.pannello-dettaglio{background:#fff;border-radius:14px;max-width:760px;width:100%;padding:24px;position:relative;margin:20px auto}
+.pannello-dettaglio .chiudi{position:absolute;top:14px;right:16px;background:none;border:none;font-size:26px;cursor:pointer;color:var(--grigio);line-height:1}
+.pannello-dettaglio h3{font-size:19px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;padding-right:30px}
+.pannello-dettaglio .sotto-titolo{font-size:13px;color:var(--grigio);margin-bottom:16px}
+.riepilogo-mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:18px}
+.riepilogo-mini div{background:#fafbfa;border:1px solid var(--linea);border-radius:7px;padding:8px 10px}
+.riepilogo-mini .etich{font-size:11px;color:var(--grigio);text-transform:uppercase;font-family:'Source Sans 3';font-weight:600;letter-spacing:.4px}
+.riepilogo-mini .val{font-family:'IBM Plex Mono';font-weight:700;font-size:15px;margin-top:2px}
+.lista-gare{display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow-y:auto}
+.card-gara{border:1px solid var(--linea);border-radius:8px;padding:10px 12px}
+.card-gara .oggetto{font-size:14px;font-weight:600;margin-bottom:4px}
+.card-gara .meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--grigio);align-items:center}
+.card-gara .valore-gara{font-family:'IBM Plex Mono';font-weight:700;color:var(--inchiostro)}
+.tag-categoria{background:#eef2f7;color:var(--blu);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600}
+.tag-diretto{background:#fbebea;color:var(--rosso);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600}
+.tag-aperta{background:#e8f6ec;color:var(--verde);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600}
+.nessun-esempio{color:var(--grigio);font-size:13px;text-align:center;padding:20px}
+
+footer{max-width:1180px;margin:0 auto;padding:20px;font-size:12px;color:var(--grigio)}
+footer a{color:var(--blu)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <svg class="header-icona" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M10 6 H30 L38 14 V42 H10 Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M30 6 V14 H38" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <line x1="16" y1="22" x2="32" y2="22" stroke="currentColor" stroke-width="2"/>
+      <line x1="16" y1="28" x2="32" y2="28" stroke="currentColor" stroke-width="2"/>
+      <line x1="16" y1="34" x2="26" y2="34" stroke="currentColor" stroke-width="2"/>
+    </svg>
+    <div style="flex:1">
+      <h1>Trasparenza Appalti</h1>
+      <p class="header-sub">Indicatori statistici sugli appalti pubblici italiani sopra 40.000€, aggregati per stazione appaltante e regione. Fonte: <a href="https://dati.anticorruzione.it" target="_blank" rel="noopener">ANAC</a>, formato OCDS via <a href="https://data.open-contracting.org/en/publication/117" target="_blank" rel="noopener">Open Contracting Partnership</a> (CC-BY 4.0).</p>
+    </div>
+    <button id="btn-installa" class="btn-installa" style="display:none">📲 Installa</button>
+  </div>
+</header>
+
+<div id="overlay-installa" style="display:none;position:fixed;inset:0;background:rgba(22,27,32,.65);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:14px;max-width:360px;width:100%;padding:24px;text-align:center;position:relative">
+    <button id="chiudi-overlay-installa" style="position:absolute;top:10px;right:14px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--grigio)" aria-label="Chiudi">×</button>
+    <div style="font-size:40px;margin-bottom:8px">📲</div>
+    <h3 style="margin-bottom:10px">Installa l'app</h3>
+    <div id="testo-istruzioni-installa" style="font-size:14px;color:var(--inchiostro);line-height:1.6;text-align:left"></div>
+  </div>
+</div>
+
+<div class="disclaimer">
+  <b>Cosa sono questi numeri:</b> indicatori statistici calcolati su dati pubblici ufficiali — non accuse, non sentenze, non giudizi su nessun ente o azienda. La percentuale di affidamenti diretti, ad esempio, può essere alta per motivi del tutto legittimi (urgenza, fornitore unico qualificato, importi sotto soglia di legge). Questi dati servono a orientare l'attenzione, non a stabilire colpe: per qualunque valutazione, la fonte primaria resta <a href="https://dati.anticorruzione.it" target="_blank" rel="noopener" style="color:#6b5410;text-decoration:underline">il portale ANAC</a>.
+</div>
+
+<main>
+  <div id="stato">
+    <div class="spin" aria-hidden="true"></div>
+    <div>Carico gli indicatori…</div>
+  </div>
+
+  <div id="contenuto" style="display:none">
+    <h2 style="font-size:18px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">Per regione</h2>
+    <div class="griglia-regioni" id="griglia-regioni"></div>
+
+    <div class="tab-wrap">
+      <div class="tab-testata">
+        <h2 id="titolo-tabella">Tutte le stazioni appaltanti</h2>
+        <div class="barra" style="margin-bottom:0">
+          <select id="filtro-anno-select" class="select-filtro" aria-label="Filtra per anno">
+            <option value="">Tutti gli anni</option>
+          </select>
+          <select id="filtro-regione-select" class="select-filtro" aria-label="Filtra per regione">
+            <option value="">Tutte le regioni</option>
+          </select>
+          <select id="filtro-comune-select" class="select-filtro" aria-label="Filtra per comune" disabled>
+            <option value="">Tutti i comuni</option>
+          </select>
+          <select id="ordina-select" class="select-filtro" aria-label="Ordina per">
+            <option value="n_gare:-1">Più gare</option>
+            <option value="n_gare:1">Meno gare</option>
+            <option value="pct_affidamenti_diretti:-1">% affid. diretti: dal più alto</option>
+            <option value="pct_affidamenti_diretti:1">% affid. diretti: dal più basso</option>
+            <option value="valore_totale:-1">Valore totale: dal più alto</option>
+            <option value="valore_totale:1">Valore totale: dal più basso</option>
+          </select>
+          <div class="cerca"><input type="text" id="cerca" placeholder="Cerca ente..."></div>
+          <span class="conteggio" id="conteggio"></span>
+        </div>
+      </div>
+      <div class="scroll-x">
+        <table>
+          <thead>
+            <tr>
+              <th data-col="ente">Ente</th>
+              <th data-col="comune">Comune</th>
+              <th data-col="regione">Regione</th>
+              <th data-col="n_gare" style="text-align:right">Gare</th>
+              <th data-col="pct_affidamenti_diretti" style="text-align:right">% affid. diretti</th>
+              <th data-col="valore_totale" style="text-align:right">Valore totale</th>
+              <th data-col="durata_media_gara_giorni" style="text-align:right">Durata media gara</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>Dati: ANAC, Banca Dati Nazionale dei Contratti Pubblici, ridistribuiti in formato OCDS da Open Contracting Partnership con licenza <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY 4.0</a>. Copre i contratti sopra 40.000€, aggiornamento mensile. Pagina indipendente, non affiliata ad ANAC.</p>
+</footer>
+
+<div class="overlay-dettaglio" id="overlay-dettaglio">
+  <div class="pannello-dettaglio">
+    <button class="chiudi" id="chiudi-dettaglio" aria-label="Chiudi">×</button>
+    <h3 id="dettaglio-ente"></h3>
+    <div class="sotto-titolo" id="dettaglio-sotto"></div>
+    <div class="riepilogo-mini" id="dettaglio-riepilogo"></div>
+    <div id="dettaglio-filtro-wrap" style="margin-bottom:10px;display:none">
+      <label for="dettaglio-filtro-anno" style="font-size:12px;color:var(--grigio);margin-right:6px">Filtra esempi per anno:</label>
+      <select id="dettaglio-filtro-anno" class="select-filtro"></select>
+    </div>
+    <div class="lista-gare" id="dettaglio-lista"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+let DATI = null, regioneAttiva = null, comuneAttivo = null, annoAttivo = null, colonnaOrdine = "n_gare", direzioneOrdine = -1;
+let entiVisualizzati = [];
+let sogliePct = { p25: 20, p75: 50, mediana: 35 }; // valori di riserva finché non arrivano i dati reali
+const $ = s => document.querySelector(s);
+
+// Calcola le soglie di colorazione dai dati REALI (percentili), invece di
+// usare due numeri fissi arbitrari (es. "50% = alto"): così il confronto è
+// sempre relativo a come si comportano davvero gli enti in questo dataset,
+// non a una soglia scelta a occhio.
+function percentile(valoriOrdinati, p){
+  if (!valoriOrdinati.length) return 0;
+  const idx = Math.min(valoriOrdinati.length - 1, Math.floor(p * valoriOrdinati.length));
+  return valoriOrdinati[idx];
+}
+function calcolaSogliePct(enti){
+  const valori = enti.map(e => e.pct_affidamenti_diretti).filter(v => v != null).sort((a, b) => a - b);
+  sogliePct = {
+    p25: percentile(valori, 0.25),
+    mediana: percentile(valori, 0.5),
+    p75: percentile(valori, 0.75),
+  };
+}
+function classePct(p){
+  if (p >= sogliePct.p75) return "alto";
+  if (p >= sogliePct.p25) return "medio";
+  return "basso";
+}
+// Testo neutro per il tooltip: descrive la posizione relativa, non un
+// giudizio ("alto" suona come un verdetto; "sopra il resto degli enti" è
+// solo un fatto statistico verificabile).
+function descrizionePct(p){
+  if (p >= sogliePct.p75) return `${p}% affidamenti diretti — sopra il resto degli enti nel dataset (mediana: ${sogliePct.mediana}%)`;
+  if (p >= sogliePct.p25) return `${p}% affidamenti diretti — in linea con la media degli enti (mediana: ${sogliePct.mediana}%)`;
+  return `${p}% affidamenti diretti — sotto il resto degli enti nel dataset (mediana: ${sogliePct.mediana}%)`;
+}
+function fmtValore(v){
+  if (v >= 1_000_000) return (v / 1_000_000).toFixed(1).replace(".", ",") + " M€";
+  if (v >= 1_000) return (v / 1_000).toFixed(0) + " k€";
+  return v.toFixed(0) + " €";
+}
+
+async function carica(){
+  try {
+    const r = await fetch("dati/indicatori.json?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    DATI = await r.json();
+    calcolaSogliePct(DATI.enti);
+    $("#stato").style.display = "none";
+    $("#contenuto").style.display = "block";
+    popolaSelectAnni();
+    popolaSelectRegioni();
+    disegnaRegioni();
+    disegnaTabella();
+  } catch (e){
+    $("#stato").innerHTML = '<div style="color:var(--rosso)">Dati non disponibili al momento. Riprova tra qualche minuto.</div>';
+  }
+}
+
+function popolaSelectAnni(){
+  const anni = DATI.anni_disponibili || [];
+  const sel = $("#filtro-anno-select");
+  if (anni.length < 2){
+    sel.style.display = "none";
+    return;
+  }
+  sel.style.display = "";
+  sel.innerHTML = '<option value="">Tutti gli anni</option>' +
+    [...anni].sort((a, b) => b.localeCompare(a)).map(a => `<option value="${a}">${a}</option>`).join("");
+}
+
+// Ritorna le metriche di un ente per l'anno selezionato (o il totale se
+// nessun anno è filtrato). Ritorna null se l'ente non ha attività in
+// quell'anno specifico (va quindi escluso dalla tabella).
+function valoriEnte(e){
+  if (!annoAttivo) return e;
+  const pa = e.per_anno && e.per_anno[annoAttivo];
+  if (!pa) return null;
+  return { ...e, ...pa };
+}
+
+function valoriRegione(r){
+  if (!annoAttivo) return r;
+  const pa = r.per_anno && r.per_anno[annoAttivo];
+  if (!pa) return null;
+  return { ...r, ...pa };
+}
+
+function popolaSelectRegioni(){
+  const regioni = [...DATI.regioni].sort((a, b) => a.regione.localeCompare(b.regione, "it"));
+  $("#filtro-regione-select").innerHTML = '<option value="">Tutte le regioni</option>' +
+    regioni.map(r => `<option value="${r.regione}">${r.regione}</option>`).join("");
+}
+
+function popolaSelectComuni(){
+  const selComune = $("#filtro-comune-select");
+  if (!regioneAttiva){
+    selComune.innerHTML = '<option value="">Tutti i comuni</option>';
+    selComune.disabled = true;
+    comuneAttivo = null;
+    return;
+  }
+  const comuni = [...new Set(
+    DATI.enti.filter(e => e.regione === regioneAttiva && e.comune).map(e => e.comune)
+  )].sort((a, b) => a.localeCompare(b, "it"));
+
+  if (!comuni.length){
+    selComune.innerHTML = '<option value="">Comune non disponibile per questa regione</option>';
+    selComune.disabled = true;
+    comuneAttivo = null;
+    return;
+  }
+  selComune.disabled = false;
+  selComune.innerHTML = '<option value="">Tutti i comuni</option>' +
+    comuni.map(c => `<option value="${c}">${c}</option>`).join("");
+}
+
+function disegnaRegioni(){
+  const regioni = DATI.regioni
+    .map(r => ({ regione: r.regione, v: valoriRegione(r) }))
+    .filter(x => x.v);
+
+  $("#griglia-regioni").innerHTML = regioni.map(({ regione, v }) => {
+    const cls = classePct(v.pct_affidamenti_diretti);
+    const attiva = regione === regioneAttiva ? "attiva" : "";
+    return `<div class="card-regione ${attiva}" data-regione="${regione}">
+      <h3>${regione}</h3>
+      <div class="pct ${cls}" title="${descrizionePct(v.pct_affidamenti_diretti)}">${v.pct_affidamenti_diretti}%</div>
+      <div class="sotto">affidamenti diretti · ${v.n_gare.toLocaleString("it-IT")} gare</div>
+    </div>`;
+  }).join("");
+
+  document.querySelectorAll(".card-regione").forEach(card => {
+    card.addEventListener("click", () => {
+      const reg = card.dataset.regione;
+      regioneAttiva = regioneAttiva === reg ? null : reg;
+      $("#filtro-regione-select").value = regioneAttiva || "";
+      popolaSelectComuni();
+      disegnaRegioni();
+      disegnaTabella();
+    });
+  });
+}
+
+function disegnaTabella(){
+  const ricerca = $("#cerca").value.trim().toLowerCase();
+  let enti = DATI.enti
+    .filter(e =>
+      (!regioneAttiva || e.regione === regioneAttiva) &&
+      (!comuneAttivo || e.comune === comuneAttivo) &&
+      (!ricerca || e.ente.toLowerCase().includes(ricerca))
+    )
+    .map(e => {
+      const v = valoriEnte(e);
+      return v ? { ...e, ...v } : null;
+    })
+    .filter(Boolean);
+  enti.sort((a, b) => {
+    const va = a[colonnaOrdine], vb = b[colonnaOrdine];
+    if (typeof va === "string") return direzioneOrdine * va.localeCompare(vb, "it");
+    return direzioneOrdine * ((va ?? -Infinity) - (vb ?? -Infinity));
+  });
+
+  // Ricalcolo le soglie di colorazione sul set attualmente filtrato (anno/
+  // regione/comune/ricerca), così il confronto resta sempre relativo a chi
+  // stiamo davvero guardando, non all'intero dataset nazionale.
+  calcolaSogliePct(enti);
+
+  const titolo = [annoAttivo, regioneAttiva, comuneAttivo].filter(Boolean).join(" · ");
+  $("#titolo-tabella").textContent = titolo ? `Stazioni appaltanti · ${titolo}` : "Tutte le stazioni appaltanti";
+  $("#conteggio").textContent = `${enti.length.toLocaleString("it-IT")} enti`;
+
+  entiVisualizzati = enti.slice(0, 300);
+  $("#tbody").innerHTML = entiVisualizzati.map((e, i) => `
+    <tr data-idx="${i}">
+      <td>${e.ente}</td>
+      <td>${e.comune || '<span class="nd">—</span>'}</td>
+      <td>${e.regione || '<span class="nd">—</span>'}</td>
+      <td class="num">${e.n_gare.toLocaleString("it-IT")}</td>
+      <td class="num"><span class="badge-pct ${classePct(e.pct_affidamenti_diretti)}" title="${descrizionePct(e.pct_affidamenti_diretti)}">${e.pct_affidamenti_diretti}%</span></td>
+      <td class="num">${fmtValore(e.valore_totale)}</td>
+      <td class="num">${e.durata_media_gara_giorni != null ? e.durata_media_gara_giorni + " gg" : '<span class="nd">—</span>'}</td>
+    </tr>
+  `).join("") || '<tr><td colspan="7" style="text-align:center;color:var(--grigio);padding:24px">Nessun risultato.</td></tr>';
+}
+
+document.querySelectorAll("th[data-col]").forEach(th => {
+  th.addEventListener("click", () => {
+    const col = th.dataset.col;
+    if (colonnaOrdine === col) direzioneOrdine *= -1;
+    else { colonnaOrdine = col; direzioneOrdine = -1; }
+    sincronizzaSelectOrdine();
+    disegnaTabella();
+  });
+});
+$("#cerca").addEventListener("input", disegnaTabella);
+
+$("#filtro-anno-select").addEventListener("change", function(){
+  annoAttivo = this.value || null;
+  disegnaRegioni();
+  disegnaTabella();
+});
+
+$("#filtro-regione-select").addEventListener("change", function(){
+  regioneAttiva = this.value || null;
+  popolaSelectComuni();
+  disegnaRegioni();
+  disegnaTabella();
+});
+
+$("#filtro-comune-select").addEventListener("change", function(){
+  comuneAttivo = this.value || null;
+  disegnaTabella();
+});
+
+function sincronizzaSelectOrdine(){
+  const valore = `${colonnaOrdine}:${direzioneOrdine}`;
+  const sel = $("#ordina-select");
+  // Se la combinazione colonna+direzione non è tra le opzioni disponibili
+  // (es. ordinamento per "ente" o "comune" cliccando l'intestazione), il
+  // select semplicemente non mostra nulla di selezionato: nessun problema.
+  sel.value = [...sel.options].some(o => o.value === valore) ? valore : "";
+}
+
+$("#ordina-select").addEventListener("change", function(){
+  const [col, dir] = this.value.split(":");
+  colonnaOrdine = col;
+  direzioneOrdine = parseInt(dir, 10);
+  disegnaTabella();
+});
+
+function fmtData(iso){
+  if (!iso) return "";
+  const [a, m, g] = iso.split("-");
+  return `${g}/${m}/${a}`;
+}
+
+let esempiCorrenti = [];
+
+function renderListaGare(esempi){
+  if (!esempi.length){
+    $("#dettaglio-lista").innerHTML = '<div class="nessun-esempio">Nessun esempio con descrizione disponibile per questo periodo.</div>';
+    return;
+  }
+  $("#dettaglio-lista").innerHTML = esempi.map(g => `
+    <div class="card-gara">
+      <div class="oggetto">${g.oggetto}</div>
+      <div class="meta">
+        <span class="valore-gara">${fmtValore(g.valore)}</span>
+        <span class="tag-categoria">${g.categoria}</span>
+        <span class="${g.diretto ? "tag-diretto" : "tag-aperta"}">${g.diretto ? "Affidamento diretto" : "Gara aperta"}</span>
+        ${g.data ? `<span>${fmtData(g.data)}</span>` : ""}
+        ${g.durata_gg != null ? `<span>${g.durata_gg} gg</span>` : ""}
+      </div>
+    </div>
+  `).join("");
+}
+
+function apriDettaglio(ente){
+  $("#dettaglio-ente").textContent = ente.ente;
+  const luogo = [ente.comune, ente.regione].filter(Boolean).join(" · ");
+  $("#dettaglio-sotto").textContent = luogo || "Località non disponibile";
+
+  $("#dettaglio-riepilogo").innerHTML = `
+    <div><div class="etich">Gare totali</div><div class="val">${ente.n_gare.toLocaleString("it-IT")}</div></div>
+    <div><div class="etich">% affid. diretti</div><div class="val">${ente.pct_affidamenti_diretti}%</div></div>
+    <div><div class="etich">Valore totale</div><div class="val">${fmtValore(ente.valore_totale)}</div></div>
+    <div><div class="etich">Durata media</div><div class="val">${ente.durata_media_gara_giorni != null ? ente.durata_media_gara_giorni + " gg" : "—"}</div></div>
+  `;
+
+  esempiCorrenti = ente.gare_esempio || [];
+  const anniDisponibili = [...new Set(esempiCorrenti.filter(g => g.data).map(g => g.data.slice(0, 4)))].sort((a, b) => b - a);
+
+  const filtroWrap = $("#dettaglio-filtro-wrap");
+  const selAnno = $("#dettaglio-filtro-anno");
+  if (anniDisponibili.length > 1){
+    filtroWrap.style.display = "block";
+    selAnno.innerHTML = '<option value="">Tutti gli anni</option>' + anniDisponibili.map(a => `<option value="${a}">${a}</option>`).join("");
+    selAnno.value = "";
+  } else {
+    filtroWrap.style.display = "none";
+  }
+
+  renderListaGare(esempiCorrenti);
+
+  $("#overlay-dettaglio").style.display = "flex";
+}
+
+$("#tbody").addEventListener("click", (e) => {
+  const riga = e.target.closest("tr[data-idx]");
+  if (!riga) return;
+  const ente = entiVisualizzati[parseInt(riga.dataset.idx, 10)];
+  if (ente) apriDettaglio(ente);
+});
+
+$("#dettaglio-filtro-anno").addEventListener("change", function(){
+  const anno = this.value;
+  const filtrati = anno ? esempiCorrenti.filter(g => g.data && g.data.startsWith(anno)) : esempiCorrenti;
+  renderListaGare(filtrati);
+});
+
+$("#chiudi-dettaglio").addEventListener("click", () => {
+  $("#overlay-dettaglio").style.display = "none";
+});
+$("#overlay-dettaglio").addEventListener("click", (e) => {
+  if (e.target.id === "overlay-dettaglio") $("#overlay-dettaglio").style.display = "none";
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") $("#overlay-dettaglio").style.display = "none";
+});
+
+carica();
+
+// --- Installazione come app (PWA) ---
+const giaInstallata = window.matchMedia("(display-mode: standalone)").matches
+  || window.navigator.standalone === true;
+
+if ("serviceWorker" in navigator){
+  navigator.serviceWorker.register("service-worker.js").catch(err => {
+    console.warn("Registrazione service worker fallita:", err);
+  });
+}
+
+if (!giaInstallata){
+  const ua = navigator.userAgent;
+  const iOS = /iphone|ipad|ipod/i.test(ua);
+  const android = /android/i.test(ua);
+  const samsung = /samsungbrowser/i.test(ua);
+
+  let promptDifferito = null;
+  const btnInstalla = document.getElementById("btn-installa");
+  const overlayInstalla = document.getElementById("overlay-installa");
+  const testoIstruzioni = document.getElementById("testo-istruzioni-installa");
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    promptDifferito = e;
+  });
+
+  btnInstalla.style.display = "inline-block";
+
+  btnInstalla.addEventListener("click", async () => {
+    if (promptDifferito){
+      promptDifferito.prompt();
+      await promptDifferito.userChoice;
+      promptDifferito = null;
+      return;
+    }
+    let html;
+    if (iOS){
+      html = `1. Tocca l'icona <b>Condividi</b> in basso (il quadrato con la freccia verso l'alto)<br>
+        2. Scorri e tocca <b>Aggiungi a Home</b><br>
+        3. Conferma con <b>Aggiungi</b> in alto a destra`;
+    } else if (android && samsung){
+      html = `1. Tocca i <b>tre puntini</b> (⋮) in basso a destra<br>
+        2. Tocca <b>Aggiungi pagina a</b> → <b>Schermata Home</b>`;
+    } else if (android){
+      html = `1. Tocca i <b>tre puntini</b> (⋮) in alto a destra del browser<br>
+        2. Tocca <b>Installa app</b> (o <b>Aggiungi a schermata Home</b>)`;
+    } else {
+      html = `Cerca nel menu del tuo browser una voce tipo <b>Installa app</b> o <b>Aggiungi a schermata Home</b>.`;
+    }
+    testoIstruzioni.innerHTML = html;
+    overlayInstalla.style.display = "flex";
+  });
+
+  document.getElementById("chiudi-overlay-installa").addEventListener("click", () => {
+    overlayInstalla.style.display = "none";
+  });
+  overlayInstalla.addEventListener("click", (e) => {
+    if (e.target === overlayInstalla) overlayInstalla.style.display = "none";
+  });
+}
+</script>
+</body>
+</html>
